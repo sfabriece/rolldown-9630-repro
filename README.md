@@ -47,8 +47,23 @@ lives in the entry chunk and is still uninitialized when the lazy chunk evaluate
   with an init order that reads the binding before it exists.
 
 A single lazy chunk that contains *all* of recharts + es-toolkit does **not**
-reproduce (no cross-chunk split). Pinning rolldown to **1.0.2** instead of 1.0.3 is
-worth checking on your side — this repro pins 1.0.3, which is where we hit it.
+reproduce (no cross-chunk split).
+
+## Not a regression
+
+Bisected with natural `vite ⇄ rolldown` pairs (same repro structure) — it reproduces
+on every stable Vite 8 / Rolldown 1.0.x back to the first stable release:
+
+| vite | rolldown | result |
+|---|---|---|
+| 8.0.16 | 1.0.3 | crash — cross-chunk `r is not a function` |
+| 8.0.14 | 1.0.2 | crash — byte-identical output to 1.0.3 |
+| 8.0.0 | 1.0.0-rc.9 | crash — `t is not a function`, **within** the entry chunk |
+
+The manifestation shifts (within-chunk `t` on rc.9/1.0.0, cross-chunk `r` on 1.0.2+),
+but the es-toolkit CJS mis-handling is present throughout. Pre-stable betas couldn't be
+tested: `@vitejs/plugin-react@6` peer-conflicts with vite betas. This repro pins
+rolldown 1.0.3 via `overrides`; bump that (≥1.0.2) or pin an older `vite` to test others.
 
 ## Workarounds (both confirmed to fix it here)
 
